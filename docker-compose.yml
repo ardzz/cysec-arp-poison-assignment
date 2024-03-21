@@ -1,9 +1,8 @@
 version: "3.7"
 
 services:
-    alice:
+    victim:
         image: jlesage/firefox
-        container_name: mitm_alice
         restart: always
         volumes:
             - /dev/shm:/dev/shm
@@ -11,20 +10,34 @@ services:
             - "5800:5800"
         networks:
             - mitm
-    bob:
-        image: aikain/simplehttpserver:0.1
-        container_name: mitm_bob
+
+    wordpress:
+        image: wordpress:4.7.0-php7.1-apache
         restart: always
-        volumes:
-            - ./bob_files:/var/www
+        ports:
+            - "9090:80"
+        environment:
+            WORDPRESS_DB_HOST: db
+            WORDPRESS_DB_USER: root
+            WORDPRESS_DB_PASSWORD: my_db_root_password
+            WORDPRESS_DB_NAME: wordpress
         networks:
             - mitm
-    eve:
+
+    db:
+        image: mysql:5.7
+        restart: always
+        environment:
+            MYSQL_ROOT_PASSWORD: my_db_root_password
+            MYSQL_DATABASE: wordpress
+        networks:
+            - mitm
+
+    hecker:
         privileged: true
         build: .
-        container_name: mitm_eve
         volumes:
-            - ./eve_files:/olicyber
+            - ./hecker:/olicyber
         sysctls:
             # Necessary for transparent mode for mitmproxy
             - net.ipv4.ip_forward=1
